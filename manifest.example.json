@@ -1,0 +1,38 @@
+{
+  "base_osm": "input/area.osm",
+  "output_dir": "output/area",
+  "chunks": [
+    {
+      "name": "northwest",
+      "image": "input/northwest-outlined.png",
+      "x": 214028,
+      "y": 107604,
+      "z": 18,
+      "tiles_wide": 6,
+      "tiles_high": 4
+    },
+    {
+      "name": "northeast",
+      "image": "input/northeast-outlined.png",
+      "x": 214032,
+      "y": 107604,
+      "z": 18,
+      "tiles_wide": 6,
+      "tiles_high": 4
+    }
+  ],
+  "vectorize": {
+    "min_area": 50,
+    "simplify": 2.0,
+    "edge_margin": 8,
+    "dilate": 1,
+    "color_mode": "strict",
+    "orientation_radius": 120.0,
+    "orientation_tolerance": 8.0
+  },
+  "overlap_resolution": {
+    "max_overlap_m": 1.5,
+    "gap_m": 0.12,
+    "orientation_tolerance": 6.0
+  }
+}
