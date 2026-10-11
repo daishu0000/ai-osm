@@ -58,7 +58,7 @@ def main() -> None:
             "--tiles-wide", str(chunk["tiles_wide"]),
             "--tiles-high", str(chunk["tiles_high"]),
             "--min-area", str(vector.get("min_area", 50)),
-            "--simplify", str(vector.get("simplify", 2.0)),
+            "--simplify", str(vector.get("simplify", 4.0)),
             "--edge-margin", str(vector.get("edge_margin", 8)),
             "--dilate", str(vector.get("dilate", 1)),
             "--color-mode", str(vector.get("color_mode", "strict")),

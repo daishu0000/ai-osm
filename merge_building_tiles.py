@@ -130,17 +130,20 @@ def quality_record(feature, reference_lat):
     ring = local_ring(feature, reference_lat)
     vertices = len(ring) - 1
     polygon_area = area(ring)
-    if not 4 <= vertices <= 12:
+    # Outlined building complexes commonly contain notches, wings, and diagonal
+    # edges.  Treat those as valid geometry instead of requiring every candidate
+    # to look like a small orthogonal rectangle.
+    if not 3 <= vertices <= 64:
         return None
     if not 8.0 <= polygon_area <= 8_000.0:
         return None
-    if self_intersects(ring) or not orthogonal_turns(ring):
+    if self_intersects(ring):
         return None
     bounds = bbox(ring)
     center = centroid(ring)
     diagonal = math.hypot(bounds[2] - bounds[0], bounds[3] - bounds[1])
     # Prefer concise shapes, then larger/clearer candidates in overlap conflicts.
-    score = (100 if vertices == 4 else 0) - vertices + min(polygon_area, 500) / 500
+    score = (100 if vertices == 4 else 0) + (10 if orthogonal_turns(ring) else 0) - vertices + min(polygon_area, 500) / 500
     return {
         "feature": feature,
         "ring": ring,

@@ -23,7 +23,7 @@
   ],
   "vectorize": {
     "min_area": 50,
-    "simplify": 2.0,
+    "simplify": 4.0,
     "edge_margin": 8,
     "dilate": 1,
     "color_mode": "strict",

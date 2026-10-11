@@ -331,7 +331,7 @@ def main() -> None:
     parser.add_argument("--geojson", type=Path, required=True)
     parser.add_argument("--osm", type=Path, required=True)
     parser.add_argument("--min-area", type=int, default=500)
-    parser.add_argument("--simplify", type=float, default=3.0)
+    parser.add_argument("--simplify", type=float, default=4.0)
     parser.add_argument("--edge-margin", type=int, default=8)
     parser.add_argument("--dilate", type=int, default=1)
     parser.add_argument("--color-mode", choices=("strict", "broad"), default="strict")

@@ -180,7 +180,7 @@ class App(tk.Tk):
             config = {
                 "base_osm": str(osm), "output_dir": str(output),
                 "chunks": [{"name": "image", "image": str(image), **{key: metadata[key] for key in required}}],
-                "vectorize": {"min_area": 50, "simplify": 2.0, "edge_margin": 8, "dilate": 1, "color_mode": "strict", "orientation_radius": 120.0, "orientation_tolerance": 8.0},
+                "vectorize": {"min_area": 50, "simplify": 4.0, "edge_margin": 8, "dilate": 1, "color_mode": "strict", "orientation_radius": 120.0, "orientation_tolerance": 8.0},
                 "overlap_resolution": {"max_overlap_m": 1.5, "gap_m": 0.12, "orientation_tolerance": 6.0},
             }
             output.mkdir(parents=True, exist_ok=True)
