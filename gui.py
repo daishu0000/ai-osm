@@ -19,6 +19,8 @@ from PIL import Image
 
 APP_TITLE = "OSM 建筑轮廓转换工具"
 SCRIPT_DIR = Path(__file__).resolve().parent
+AUXILIARY_DIR_NAME = "其他文件"
+FINAL_OSM_NAME = "最终结果.osm"
 
 
 def open_folder(path: Path) -> None:
@@ -146,7 +148,8 @@ class App(tk.Tk):
         output.mkdir(parents=True, exist_ok=True)
         self._set_busy(True, "正在下载卫星图…", "download")
         self._write_log("\n开始下载 Esri World Imagery。\n")
-        command = [sys.executable, "-u", str(SCRIPT_DIR / "download_esri_imagery.py"), str(osm), str(output), "--zoom", "18"]
+        auxiliary = output / AUXILIARY_DIR_NAME
+        command = [sys.executable, "-u", str(SCRIPT_DIR / "download_esri_imagery.py"), str(osm), str(auxiliary), "--zoom", "18"]
         threading.Thread(target=self._worker, args=(command,), daemon=True).start()
 
     def _metadata(self) -> tuple[Path, dict]:
@@ -154,7 +157,7 @@ class App(tk.Tk):
         if not image.is_file():
             raise ValueError("请选择有效的描边图片。")
         _, output = self._valid_paths()
-        candidates = [output / "imagery-info.json", image.parent / "imagery-info.json"]
+        candidates = [output / AUXILIARY_DIR_NAME / "imagery-info.json", output / "imagery-info.json", image.parent / "imagery-info.json"]
         for path in candidates:
             if path.is_file():
                 return path, json.loads(path.read_text(encoding="utf-8"))
@@ -184,7 +187,9 @@ class App(tk.Tk):
                 "overlap_resolution": {"max_overlap_m": 1.5, "gap_m": 0.12, "orientation_tolerance": 6.0},
             }
             output.mkdir(parents=True, exist_ok=True)
-            manifest = output / "运行配置.json"
+            auxiliary = output / AUXILIARY_DIR_NAME
+            auxiliary.mkdir(parents=True, exist_ok=True)
+            manifest = auxiliary / "运行配置.json"
             manifest.write_text(json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8")
         except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
             messagebox.showerror("无法转换", str(exc), parent=self)
@@ -220,7 +225,7 @@ class App(tk.Tk):
                         messagebox.showerror("操作失败", "请查看窗口下方的运行信息。", parent=self)
                     elif operation == "download":
                         _, output = self._valid_paths()
-                        image = output / "esri-imagery-z18.jpg"
+                        image = output / AUXILIARY_DIR_NAME / "esri-imagery-z18.jpg"
                         self.imagery_status.set(f"下载完成：{image.name}")
                         self.status.set("卫星图下载完成，可以使用图片编辑工具描边。")
                         messagebox.showinfo(
@@ -230,7 +235,7 @@ class App(tk.Tk):
                             parent=self,
                         )
                     else:
-                        result = Path(self.output_dir.get()) / "buildings-final.osm"
+                        result = Path(self.output_dir.get()) / FINAL_OSM_NAME
                         self.status.set("转换完成，可以用 JOSM 打开结果。")
                         messagebox.showinfo("转换完成", f"结果已生成：\n{result}\n\n请在 JOSM 中逐栋复核。", parent=self)
                 elif kind == "error":
@@ -250,7 +255,7 @@ class App(tk.Tk):
 
     def _detect_existing_metadata(self) -> None:
         value = self.output_dir.get().strip()
-        if value and (Path(value) / "imagery-info.json").is_file():
+        if value and any((Path(value) / relative).is_file() for relative in (Path(AUXILIARY_DIR_NAME) / "imagery-info.json", Path("imagery-info.json"))):
             self.imagery_status.set("已找到之前下载的卫星图定位信息")
 
     def _write_log(self, text: str) -> None:

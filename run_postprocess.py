@@ -5,9 +5,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+
+AUXILIARY_DIR_NAME = "其他文件"
+FINAL_OSM_NAME = "最终结果.osm"
 
 
 def resolved(base: Path, value: str) -> Path:
@@ -32,9 +37,14 @@ def main() -> None:
     base_osm = resolved(manifest_dir, config["base_osm"])
     output_dir = resolved(manifest_dir, config["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
+    auxiliary_dir = output_dir / AUXILIARY_DIR_NAME
+    auxiliary_dir.mkdir(parents=True, exist_ok=True)
 
     if not base_osm.is_file():
         raise SystemExit(f"Base OSM file not found: {base_osm}")
+    original_copy = output_dir / f"原始文件-{base_osm.name}"
+    if base_osm != original_copy:
+        shutil.copy2(base_osm, original_copy)
     chunks = config.get("chunks", [])
     if not chunks:
         raise SystemExit("Manifest must contain at least one chunk")
@@ -46,8 +56,8 @@ def main() -> None:
         image = resolved(manifest_dir, chunk["image"])
         if not image.is_file():
             raise SystemExit(f"Outlined image not found: {image}")
-        geojson = output_dir / f"{name}-buildings.geojson"
-        osm = output_dir / f"{name}-buildings.osm"
+        geojson = auxiliary_dir / f"{name}-buildings.geojson"
+        osm = auxiliary_dir / f"{name}-buildings.osm"
         command = [
             sys.executable,
             str(script_dir / "vectorize_outlines.py"),
@@ -70,8 +80,8 @@ def main() -> None:
         run(command)
         chunk_geojsons.append(geojson)
 
-    deduplicated_osm = output_dir / "buildings-deduplicated.osm"
-    deduplicated_geojson = output_dir / "buildings-deduplicated.geojson"
+    deduplicated_osm = auxiliary_dir / "buildings-deduplicated.osm"
+    deduplicated_geojson = auxiliary_dir / "buildings-deduplicated.geojson"
     run([
         sys.executable,
         str(script_dir / "merge_building_tiles.py"),
@@ -82,8 +92,8 @@ def main() -> None:
     ])
 
     overlap = config.get("overlap_resolution", {})
-    final_osm = output_dir / "buildings-final.osm"
-    final_geojson = output_dir / "buildings-final.geojson"
+    final_osm = output_dir / FINAL_OSM_NAME
+    final_geojson = auxiliary_dir / "buildings-final.geojson"
     run([
         sys.executable,
         str(script_dir / "resolve_building_overlaps.py"),
@@ -96,7 +106,7 @@ def main() -> None:
         "--orientation-tolerance", str(overlap.get("orientation_tolerance", 6.0)),
     ])
 
-    report_path = output_dir / "validation.json"
+    report_path = auxiliary_dir / "validation.json"
     run([
         sys.executable,
         str(script_dir / "validate_osm.py"),
@@ -104,6 +114,7 @@ def main() -> None:
         "--json", str(report_path),
     ])
     print(f"Final OSM: {final_osm}")
+    print(f"Original OSM copy: {original_copy}")
     print(f"Final GeoJSON: {final_geojson}")
     print(f"Validation: {report_path}")
 
